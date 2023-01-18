@@ -38,8 +38,8 @@ class PaperScript2023:
 
 
     def results(self):
-        self.results_01_individual()
-        self.results_02_tse()
+        # self.results_01_individual()
+        # self.results_02_tse()
         self.results_03_combined()
    
     def get_features(self):
@@ -178,18 +178,18 @@ class PaperScript2023:
                 return str(test[0]), model_name, roc
             
             def calculate_roc_combined(params):
-                
                 path, model_params = params
                 model_name, model = model_params
                 print(f"results_03_combined calculate_roc_combined {path} {model_name}")
-                paths = np.array(glob.glob(os.path.join(all_paths[0], f'*{os.sep}' )))
+                paths = np.array(glob.glob(os.path.join(path, f'*{os.sep}' )))
                 loo = LeaveOneOut()
                 splits = loo.split(paths) 
                 rocs = map(calculate_roc, [(paths, model_name, model, split) for split in splits])
                 return rocs
 
-            all_paths = self.get_paths(self.level - 1)
-            all_models = self.get_models()
+            #TODO remove [0:2]
+            all_paths = self.get_paths(self.level - 1)[0:2]
+            all_models = self.get_models()[0:2]
             all_params = list(ite.product(all_paths, all_models))
             rocs = list(map(calculate_roc_combined, all_params))
             rocs = reduce(lambda x,y: ite.chain(x,y), rocs)
