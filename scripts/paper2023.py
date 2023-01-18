@@ -187,9 +187,8 @@ class PaperScript2023:
                 rocs = map(calculate_roc, [(paths, model_name, model, split) for split in splits])
                 return rocs
 
-            #TODO remove [0:2]
-            all_paths = self.get_paths(self.level - 1)[0:2]
-            all_models = self.get_models()[0:2]
+            all_paths = self.get_paths(self.level - 1)
+            all_models = self.get_models()
             all_params = list(ite.product(all_paths, all_models))
             rocs = list(map(calculate_roc_combined, all_params))
             rocs = reduce(lambda x,y: ite.chain(x,y), rocs)
