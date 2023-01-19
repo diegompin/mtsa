@@ -9,14 +9,18 @@ import tensorflow as tf
 tf.get_logger().setLevel(logging.ERROR)
 tf.keras.utils.disable_interactive_logging()
 
+from common import elapsed_time, multiple_runs
 import argparse
 import os
 import numpy as np
 import itertools as ite
 import pandas as pd
-from functools import reduce
+from functools import reduce, partial
 import glob
 import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import LeaveOneOut
 from mtsa import (
     MFCCMix,
     Hitachi,
@@ -26,10 +30,6 @@ from mtsa import (
     get_tsne_results,
     files_train_test_split_combined
 )
-import seaborn as sns
-from sklearn.mixture import GaussianMixture
-from sklearn.model_selection import LeaveOneOut
-
 
 class PaperScript2023:
 
@@ -38,9 +38,10 @@ class PaperScript2023:
 
 
     def results(self):
+        #TODO revert
         self.results_01_individual()
-        self.results_02_tse()
-        self.results_03_combined()
+        # self.results_02_tse()
+        # self.results_03_combined()
    
     def get_features(self):
         number_features = np.arange(1, len(FEATURES)+1)
@@ -81,8 +82,10 @@ class PaperScript2023:
         filename = 'roc'
         if 'filename' in kwargs:
             filename = kwargs['filename']
-        with open(os.path.join(path_output, f'{filename}.tex'), 'w') as tf:
-            tf.write(df_final.to_latex())     
+        filepath = os.path.join(path_output, f'{filename}')
+        with open(f'{filepath}.tex', 'w') as tf:
+            tf.write(df_final.to_latex())
+        df_final.to_hdf(f'{filepath}.h5', 'df')    
     
     def convert_to_dataframe(self, rocs, level):
         rocs_norms = list(map(self.extract_params, [(r, level) for r in rocs]))
@@ -111,16 +114,27 @@ class PaperScript2023:
             model_name, model = model
             print(f"results_01_individual calculate_roc {path} {model_name}")
             X_train, X_test, y_train, y_test = files_train_test_split(path)
-            model.fit(X_train, y_train)
-            roc = calculate_aucroc(model,X_test, y_test)
-            return path, model_name, roc
+            runs = 3
+            results_fit = multiple_runs(runs, model.fit, X_train, y_train)
+            results_roc = multiple_runs(runs, calculate_aucroc, model,X_test, y_test)
+
+            # results_fit = reduce(
+            #     lambda x,y: ite.chain(x,y), 
+            #     map(fit_partial, )
+            #     )
+            # time_fit, _ = elapsed_time(model.fit, X_train, y_train)
+            # model.fit(X_train, y_train)
+            # time_roc, roc = elapsed_time(calculate_aucroc, model,X_test, y_test)
+            # roc = calculate_aucroc(model,X_test, y_test)
+            return path, model_name, results_fit, results_roc
             
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
         all_params = list(ite.product(all_paths, all_models))
-        rocs = list(map(calculate_roc, all_params))
-        df_final = self.convert_to_dataframe(rocs, level=self.level)
-        self.write_df(df_final, filename='results_01_individual')
+        results = list(map(calculate_roc, all_params))
+        df = pd.DataFrame(results)
+        # df_final = self.convert_to_dataframe(rocs, level=self.level)
+        self.write_df(df, filename='results_01_individual')
         print("FINISH: results_01_individual")
 
     def results_02_tse(self):
