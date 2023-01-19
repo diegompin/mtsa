@@ -38,8 +38,8 @@ class PaperScript2023:
 
 
     def results(self):
-        # self.results_01_individual()
-        # self.results_02_tse()
+        self.results_01_individual()
+        self.results_02_tse()
         self.results_03_combined()
    
     def get_features(self):
