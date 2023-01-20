@@ -4,9 +4,9 @@ from functools import reduce
 
 def elapsed_time(fun, *args):
     start = time.time()
+    fun_return = fun(*args)
     end = time.time()
     time_elapsed = end - start
-    fun_return = fun(*args)      
     return time_elapsed, fun_return
 
 def multiple_runs(runs, fun, *args):
