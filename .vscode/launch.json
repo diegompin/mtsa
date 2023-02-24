@@ -5,22 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python2",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "env": { "PYTHONPATH": "${workspaceRoot}"},
-            "args": [
-            
-            ], 
-            "autoReload": {
-                "enable": true
-            }
-        },
-        {
-            "name": "Python: Current File",
+            "name": "T1",
             "type": "python",
             "request": "launch",
             "program": "${file}",
@@ -38,6 +23,21 @@
             "autoReload": {
                 "enable": true
             }
-        }
+        },
+        {
+            "name": "T2",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": { "PYTHONPATH": "${workspaceRoot}"},
+            "args": [
+            
+            ], 
+            "autoReload": {
+                "enable": true
+            }
+        },
     ]
 }
