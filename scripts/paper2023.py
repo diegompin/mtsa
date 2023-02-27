@@ -38,8 +38,8 @@ class PaperScript2023:
 
     def results(self):
         self.results_01_individual()
-        self.results_02_tse()
-        self.results_03_combined()
+        # self.results_02_tse()
+        # self.results_03_combined()
 
     def get_features(self):
         number_features = np.arange(1, len(FEATURES)+1)
@@ -145,8 +145,7 @@ class PaperScript2023:
 
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
-        #TODO test 
-        all_params = list(ite.product(all_paths, all_models))[1:2]
+        all_params = list(ite.product(all_paths, all_models))
         results = list(map(calculate_roc, all_params))
 
         def convert(match_obj):
@@ -157,7 +156,10 @@ class PaperScript2023:
 
         df = pd.DataFrame.from_dict(
             {
-                (re.sub(r"_|/", convert , param['path'].strip()) , param['model_name']): 
+                (re.sub(r"_|/", convert , param['path'].strip()), 
+                 param['model_name'],
+                 fit['run_id']
+                 ): 
                     {
                         "fit time": fit['run_details']['time_elapsed'], 
                         "roc time": roc['run_details']['time_elapsed'],
