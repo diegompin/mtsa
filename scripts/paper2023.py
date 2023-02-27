@@ -145,7 +145,8 @@ class PaperScript2023:
 
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
-        all_params = list(ite.product(all_paths, all_models))
+        #TODO test 
+        all_params = list(ite.product(all_paths, all_models))[1:2]
         results = list(map(calculate_roc, all_params))
 
         def convert(match_obj):
