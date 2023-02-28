@@ -34,7 +34,7 @@ class Hitachi(BaseEstimator, OutlierMixin):
     """
     def __init__(self, 
                  sampling_rate=None,
-                 random_state = 10000,
+                 random_state = None,
                  n_mels=64,
                  frames=5,
                  n_fft=1024,

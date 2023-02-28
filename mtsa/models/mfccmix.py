@@ -34,7 +34,7 @@ class MFCCMix(BaseEstimator, OutlierMixin):
                  final_model=FINAL_MODEL, 
                  features=FEATURES,
                  sampling_rate=None,
-                 random_state = 10000,
+                 random_state = None,
                  ) -> None:
         super().__init__()
         self.sampling_rate = sampling_rate

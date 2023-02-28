@@ -153,7 +153,7 @@ class PaperScript2023:
                 return ""
             if match_obj.group(0) == '/':
                 return " "
-
+     
         df = pd.DataFrame.from_dict(
             {
                 (re.sub(r"_|/", convert , param['path'].strip()), 
@@ -167,10 +167,10 @@ class PaperScript2023:
                     }
                 for param in results
                 for (fit, roc) in list(zip(param['results_fit'], param['results_roc']))
-
             },
             orient='index'
         )
+        df.index = df.index.set_names(['path', 'model', 'run id'])
 
         self.write_df(df, filename='results_01_individual')
         
