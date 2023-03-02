@@ -19,7 +19,7 @@ def get_tsne_results(model, X, y, **kwargs):
     n_components = _get_par('n_components', 2, **kwargs)
     perplexity = _get_par('perplexity', 4, **kwargs)
     n_iter = _get_par('n_iter', 300, **kwargs)
-    random_state = _get_par('random_state', 10000, **kwargs)
+    random_state = _get_par('random_state', None, **kwargs)
     tsne = TSNE(n_components=n_components, verbose=1, perplexity=perplexity, n_iter=n_iter, random_state=random_state)
     
     # Xt = model['features'].fit_transform(

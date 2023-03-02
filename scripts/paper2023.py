@@ -156,7 +156,7 @@ class PaperScript2023:
      
         df = pd.DataFrame.from_dict(
             {
-                (re.sub(r"_|/", convert , param['path'].strip()), 
+                (re.sub(r"_|/", convert , param['path']).strip(), 
                  param['model_name'],
                  fit['run_id']
                  ): 

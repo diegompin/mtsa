@@ -54,7 +54,7 @@ class MFCCMixPipeline():
         perplexity = 4
         if 'perplexity' in kwargs:
             perplexity = kwargs['perplexity']
-        tsne = TSNE(n_components=2, verbose=1, perplexity=perplexity, n_iter=300, random_state=10000)
+        tsne = TSNE(n_components=2, verbose=1, perplexity=perplexity, n_iter=300, random_state=None)
         
         X = self.mtsa.model['features'].fit_transform(
             self.mtsa.model['array2mfcc'].fit_transform(

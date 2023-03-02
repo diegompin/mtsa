@@ -18,7 +18,7 @@ class MFCCMixCV(MFCCMix):
     def __init__(
         self,
         sampling_rate = 16000,
-        random_state = 10000,
+        random_state = None,
         cv=None) -> None:
         super(MFCCMixCV, self).__init__(
             random_state=random_state,

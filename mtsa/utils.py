@@ -101,7 +101,7 @@ def get_files_from_path_classes(path):
     return X, y
 
 
-def files_train_test_split(path, random_state=10000):
+def files_train_test_split(path, random_state=None):
     X, y = get_files_from_path_classes(path)
     ind_train, ind_test = next(AbnormalSplit(random_state=random_state,n_splits=1).split(X, y))
     X_train, X_test, y_train, y_test = X[ind_train], X[ind_test], y[ind_train], y[ind_test]
