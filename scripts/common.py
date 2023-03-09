@@ -29,3 +29,4 @@ def multiple_runs(runs, fun, *args):
         list_run_ids)
 
     return multiple_results
+

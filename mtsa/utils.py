@@ -137,22 +137,3 @@ def files_train_test_split_combined(paths):
     data = list(map(files_train_test_split, paths))
     X_train, X_test, y_train, y_test = reduce(reduce_data, data)
     return X_train, X_test, y_train, y_test
-
-# import shutil
-# def generate_train_test(path, random_state=10000):
-#     X, y = get_files_from_path_classes(path)
-#     X_train, X_test, y_train, y_test = files_train_test_split(X, y)
-#     def copy(path, folder, signal, files):
-#         path_output = os.path.join(path, folder, signal)
-#         if not os.path.exists(path_output):
-#             os.makedirs(path_output)
-#         copy_file = lambda file: shutil.copy(file, path_output)
-#         list(map(copy_file, files))
-#     files_train_normal = X_train[np.where(y_train == NORMAL)[0]]
-#     files_train_abnormal = X_train[np.where(y_train == ABNORMAL)[0]]
-#     files_test_normal = X_test[np.where(y_test == NORMAL)[0]]
-#     files_test_abnormal = X_test[np.where(y_test == ABNORMAL)[0]]
-#     copy(path, "train", "normal", files_train_normal)
-#     copy(path, "train", "abnormal", files_train_abnormal)
-#     copy(path, "test", "normal", files_test_normal)
-#     copy(path, "test", "abnormal", files_test_abnormal)

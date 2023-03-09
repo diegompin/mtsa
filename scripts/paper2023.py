@@ -120,56 +120,121 @@ class PaperScript2023:
         params = roc[0].split(os.sep)[:-1][-(level+1):]
         return tuple(params), roc[1], roc[2]
 
+    def fit_individual_model(self, params):
+        path, model_params = params
+        _, model = model_params
+        X_train, X_test, y_train, y_test = files_train_test_split(path)
+        result_fit = model.fit(X_train, y_train)
+        result_roc = calculate_aucroc(model, X_test, y_test)
+        x, y, hue = self.local_get_tsne_results(model, X_test, y_test)
+        # self.plot_tsne(model_name, path, x, y, hue)
+        result = {
+            'results_fit': result_fit,
+            'results_roc': result_roc
+        }
+        return result
+
+    def local_get_tsne_results(self, model, X_test, y_test):
+        x, y, hue = get_tsne_results(
+            model=model,
+            X=model.transform(X_test),
+            y=y_test,
+            perplexity=self.perplexity
+        )
+        return  x, y, hue
+    
+    def plot_tsne(self, model_name, path, x, y, hue):
+        plt.figure(figsize=(16, 10))
+        sns.scatterplot(
+            x=x, y=y,
+            hue=hue,
+            palette=sns.color_palette("hls", 2),
+            legend="full",
+            s=100
+            # alpha=0.3
+        )
+        path_output = os.path.join(self.output, 'results_02_tse')
+        if not os.path.exists(path_output):
+            os.makedirs(path_output)
+        filename = '_'.join(path.split(os.path.sep)[
+                            :-1][-(self.level+1):]) + "_" + model_name
+        plt.savefig(os.path.join(path_output, f'{filename}.pdf'))
+
+
     def results_01_individual(self):
         print("START: results_01_individual")
-
+        
         def calculate_roc(params):
             path, model = params
             model_name, model = model
             print(f"results_01_individual calculate_roc {path} {model_name}")
-            X_train, X_test, y_train, y_test = files_train_test_split(path)
+            # X_train, X_test, y_train, y_test = files_train_test_split(path)
             # TODO make `runs` a parameter
             runs = 3
-            results_fit = list(multiple_runs(
-                runs, model.fit, X_train, y_train))
-            results_roc = list(multiple_runs(
-                runs, calculate_aucroc, model, X_test, y_test))
-
-            result = {
-                'path': path,
-                'model_name': model_name,
-                'results_fit': results_fit,
-                'results_roc': results_roc
-            }
+            result = list(multiple_runs(runs, self.fit_individual_model, path, model))
+            # result = {
+            #     'path': path,
+            #     'model_name': model_name,
+            #     'results_fit': results_fit,
+            #     'results_roc': results_roc
+            # }
             return result
 
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
         all_params = list(ite.product(all_paths, all_models))
-        results = list(map(calculate_roc, all_params))
-
+        # results = list(map(calculate_roc, all_params))
+        #TODO revert this
+        # results = list(map(calculate_roc, all_params[1:3]))
+        results = list(
+            map(self.fit_individual_model,all_params[1:3])
+        )
+        
+        
         def convert(match_obj):
             if match_obj.group(0) == '_':
                 return ""
             if match_obj.group(0) == '/':
                 return " "
-     
+        
+        
         df = pd.DataFrame.from_dict(
             {
-                (re.sub(r"_|/", convert , param['path']).strip(), 
-                 param['model_name'],
-                 fit['run_id']
+                (re.sub(r"_|/", convert , param[1][0]).strip(), 
+                 param[1][1][0],
+                #  fit['run_id']
                  ): 
                     {
-                        "fit time": fit['run_details']['time_elapsed'], 
-                        "roc time": roc['run_details']['time_elapsed'],
-                        "roc value": roc['run_details']['fun_return']
+                        "roc value": param[0]['results_roc']
                     }
-                for param in results
-                for (fit, roc) in list(zip(param['results_fit'], param['results_roc']))
+                for param in list(zip(results, all_params))
+             
             },
             orient='index'
         )
+
+        for param in list(zip(results, all_params)):
+            print(param[1][1][0])
+
+
+        # df = pd.DataFrame.from_dict(
+        #     {
+        #         (re.sub(r"_|/", convert , param['path']).strip(), 
+        #          param['model_name'],
+        #          fit['run_id']
+        #          ): 
+        #             {
+        #                 "fit time": fit['run_details']['time_elapsed'], 
+        #                 "roc time": roc['run_details']['time_elapsed'],
+        #                 "roc value": roc['run_details']['fun_return']
+        #             }
+        #         for param in results
+        #         for (fit, roc) in list(zip(param['results_fit'], param['results_roc']))
+        #     },
+        #     orient='index'
+        # )
+
+
         df.index = df.index.set_names(['path', 'model', 'run id'])
 
         self.write_df(df, filename='results_01_individual')
