@@ -180,35 +180,11 @@ class PaperScript2023:
     def results_01_individual(self):
         print("START: results_01_individual")
         
-        def calculate_roc(params):
-            path, model = params
-            model_name, model = model
-            print(f"results_01_individual calculate_roc {path} {model_name}")
-            # X_train, X_test, y_train, y_test = files_train_test_split(path)
-            # TODO make `runs` a parameter
-            runs = 3
-            result = list(multiple_runs(runs, self.fit_individual_model, path, model))
-            # result = {
-            #     'path': path,
-            #     'model_name': model_name,
-            #     'results_fit': results_fit,
-            #     'results_roc': results_roc
-            # }
-            return result
-
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
         all_params = list(ite.product(all_paths, all_models))
-        # results = list(map(calculate_roc, all_params))
-        #TODO revert this
-        # results = list(map(calculate_roc, all_params[1:3]))
-        # results = list(
-        #     map(self.fit_individual_model,all_params[1:3])
-        # )
         runs = 3
-        results = [multiple_runs(runs, self.fit_individual_model, param) for param in all_params[1:3]]
-        # results = list(multiple_runs(runs, self.fit_individual_model, *all_params[1:3]))
-        
+        results = [multiple_runs(runs, self.fit_individual_model, param) for param in all_params]        
         
         def convert(match_obj):
             if match_obj.group(0) == '_':
