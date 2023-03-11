@@ -124,13 +124,14 @@ class PaperScript2023:
         path, model_params = params
         _, model = model_params
         X_train, X_test, y_train, y_test = files_train_test_split(path)
-        result_fit = model.fit(X_train, y_train)
-        result_roc = calculate_aucroc(model, X_test, y_test)
+        result_fit = elapsed_time(model.fit, X_train, y_train)
+        result_roc = elapsed_time(calculate_aucroc, model, X_test, y_test)
         x, y, hue = self.local_get_tsne_results(model, X_test, y_test)
         # self.plot_tsne(model_name, path, x, y, hue)
         result = {
             'results_fit': result_fit,
-            'results_roc': result_roc
+            'results_roc': result_roc,
+            'results_tsne': (x, y, hue)
         }
         return result
 
@@ -160,6 +161,21 @@ class PaperScript2023:
                             :-1][-(self.level+1):]) + "_" + model_name
         plt.savefig(os.path.join(path_output, f'{filename}.pdf'))
 
+    def plot_tsne(self, params):
+            filename, x, y, hue = params
+            plt.figure(figsize=(16, 10))
+            sns.scatterplot(
+                x=x, y=y,
+                hue=hue,
+                palette=sns.color_palette("hls", 2),
+                legend="full",
+                s=100
+                # alpha=0.3
+            )
+            path_output = os.path.join(self.output, 'results_02_tse')
+            if not os.path.exists(path_output):
+                os.makedirs(path_output)
+            plt.savefig(os.path.join(path_output, f'{filename}.pdf'))
 
     def results_01_individual(self):
         print("START: results_01_individual")
@@ -186,9 +202,12 @@ class PaperScript2023:
         # results = list(map(calculate_roc, all_params))
         #TODO revert this
         # results = list(map(calculate_roc, all_params[1:3]))
-        results = list(
-            map(self.fit_individual_model,all_params[1:3])
-        )
+        # results = list(
+        #     map(self.fit_individual_model,all_params[1:3])
+        # )
+        runs = 3
+        results = [multiple_runs(runs, self.fit_individual_model, param) for param in all_params[1:3]]
+        # results = list(multiple_runs(runs, self.fit_individual_model, *all_params[1:3]))
         
         
         def convert(match_obj):
@@ -200,43 +219,45 @@ class PaperScript2023:
         
         df = pd.DataFrame.from_dict(
             {
-                (re.sub(r"_|/", convert , param[1][0]).strip(), 
-                 param[1][1][0],
-                #  fit['run_id']
+                (re.sub(r"_|/", convert , param[0][0]).strip(), 
+                 param[0][1][0],
+                 run['run_id']
                  ): 
                     {
-                        "roc value": param[0]['results_roc']
+                        "fit time": run['run_details']['fun_return']['results_fit']['time_elapsed'],
+                        "roc time": run['run_details']['fun_return']['results_roc']['time_elapsed'],
+                        "roc value": run['run_details']['fun_return']['results_roc']['fun_return']
                     }
-                for param in list(zip(results, all_params))
+                for param in list(zip(all_params, results))
+                for run in param[1]
              
             },
             orient='index'
         )
 
-        for param in list(zip(results, all_params)):
-            print(param[1][1][0])
-
-
-        # df = pd.DataFrame.from_dict(
-        #     {
-        #         (re.sub(r"_|/", convert , param['path']).strip(), 
-        #          param['model_name'],
-        #          fit['run_id']
-        #          ): 
-        #             {
-        #                 "fit time": fit['run_details']['time_elapsed'], 
-        #                 "roc time": roc['run_details']['time_elapsed'],
-        #                 "roc value": roc['run_details']['fun_return']
-        #             }
-        #         for param in results
-        #         for (fit, roc) in list(zip(param['results_fit'], param['results_roc']))
-        #     },
-        #     orient='index'
-        # )
-
-
         df.index = df.index.set_names(['path', 'model', 'run id'])
 
+        def get_filename(param, run):
+            path = param[0]
+            model_name = param[1][0]
+            run_id = run['run_id']
+            filename = f"{'_'.join(path.split(os.path.sep)[:-1][-(self.level+1):])}_{model_name}_{run_id}"
+            return filename
+
+        
+        list(
+            map(
+                self.plot_tsne, 
+                [
+                    (get_filename(param[0], run),
+                    *run['run_details']['fun_return']['results_tsne']) 
+                    
+                    for param in list(zip(all_params, results)) 
+                    for run in param[1]
+                ]
+                )
+            )
+        
         self.write_df(df, filename='results_01_individual')
         
         print("FINISH: results_01_individual")
