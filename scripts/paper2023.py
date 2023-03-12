@@ -278,7 +278,7 @@ class PaperScript2023:
             multiple_runs(self.runs, 
             calculate_roc_combined, 
             param) 
-            for param in all_params[1:3]
+            for param in all_params
             ]   
         
 
