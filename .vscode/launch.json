@@ -18,7 +18,8 @@
                 "--path=/data/sample_data",
                 "--output=/data/output_test/",
                 "--level=2",
-                "--perplexity=4"
+                "--perplexity=4",
+                "--runs=3"
             ], 
             "autoReload": {
                 "enable": true

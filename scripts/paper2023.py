@@ -31,15 +31,20 @@ tf.keras.utils.disable_interactive_logging()
 import re
 import json
 
+def convert(match_obj):
+            if match_obj.group(0) == '_':
+                return ""
+            if match_obj.group(0) == '/':
+                return " "
+
 class PaperScript2023:
 
     def __init__(self, *args, **kwargs):
         self.__dict__.update(kwargs)
 
     def results(self):
-        self.results_01_individual()
-        # self.results_02_tse()
-        # self.results_03_combined()
+        # self.results_individual()
+        self.results_combined()
 
     def get_features(self):
         number_features = np.arange(1, len(FEATURES)+1)
@@ -93,9 +98,9 @@ class PaperScript2023:
         if 'filename' in kwargs:
             filename = kwargs['filename']
         filepath = os.path.join(path_output, f'{filename}')
-        with open(f'{filepath}.tex', 'w') as tf:
-            # tf.write(df_final.to_latex())
-            tf.write(df_final.style.to_latex())
+        # with open(f'{filepath}.tex', 'w') as tf:
+        #     # tf.write(df_final.to_latex())
+        #     tf.write(df_final.style.to_latex())
         df_final.to_hdf(f'{filepath}.h5', 'df')
 
     def convert_to_dataframe(self, rocs, level):
@@ -177,20 +182,17 @@ class PaperScript2023:
                 os.makedirs(path_output)
             plt.savefig(os.path.join(path_output, f'{filename}.pdf'))
 
-    def results_01_individual(self):
+    
+        
+
+    def results_individual(self):
         print("START: results_01_individual")
         
         all_models = self.get_models()
         all_paths = self.get_paths(self.level)
         all_params = list(ite.product(all_paths, all_models))
-        runs = 3
+        runs = self.runs
         results = [multiple_runs(runs, self.fit_individual_model, param) for param in all_params]        
-        
-        def convert(match_obj):
-            if match_obj.group(0) == '_':
-                return ""
-            if match_obj.group(0) == '/':
-                return " "
         
         
         df = pd.DataFrame.from_dict(
@@ -238,48 +240,8 @@ class PaperScript2023:
         
         print("FINISH: results_01_individual")
 
-    def results_02_tse(self):
-        print("START: results_02_tse")
 
-        def local_get_tsne_results(params):
-            path, model = params
-            model_name, model = model
-            print(f"results_02_tse local_get_tsne_results {path} {model_name}")
-            X_train, X_test, y_train, y_test = files_train_test_split(path)
-            x, y, hue = get_tsne_results(
-                model=model,
-                X=model.transform(X_test),
-                y=y_test,
-                perplexity=self.perplexity
-            )
-            return path, model_name, x, y, hue
-
-        def plot_tsne(params):
-            path, model_name, x, y, hue = params
-            plt.figure(figsize=(16, 10))
-            sns.scatterplot(
-                x=x, y=y,
-                hue=hue,
-                palette=sns.color_palette("hls", 2),
-                legend="full",
-                s=100
-                # alpha=0.3
-            )
-            path_output = os.path.join(self.output, 'results_02_tse')
-            if not os.path.exists(path_output):
-                os.makedirs(path_output)
-            filename = '_'.join(path.split(os.path.sep)[
-                                :-1][-(self.level+1):]) + "_" + model_name
-            plt.savefig(os.path.join(path_output, f'{filename}.pdf'))
-
-        all_models = self.get_models()
-        all_paths = self.get_paths(self.level)
-        all_params = list(ite.product(all_paths, all_models))
-        tsne_results = list(map(local_get_tsne_results, all_params))
-        list(map(plot_tsne, tsne_results))
-        print("FINISH: results_02_tse")
-
-    def results_03_combined(self):
+    def results_combined(self):
         print("START: results_03_combined")
 
         def calculate_roc(params):
@@ -306,16 +268,40 @@ class PaperScript2023:
             splits = loo.split(paths)
             rocs = map(calculate_roc, [
                        (paths, model_name, model, split) for split in splits])
-            return rocs
+            return list(rocs)
 
         all_paths = self.get_paths(self.level - 1)
         all_models = self.get_models()
         all_params = list(ite.product(all_paths, all_models))
-        rocs = list(map(calculate_roc_combined, all_params))
-        rocs = reduce(lambda x, y: ite.chain(x, y), rocs)
-        rocs = list(rocs)
-        df_final = self.convert_to_dataframe(rocs, level=self.level - 1)
-        self.write_df(df_final, filename='results_03_combined')
+        
+        results = [
+            multiple_runs(self.runs, 
+            calculate_roc_combined, 
+            param) 
+            for param in all_params[1:3]
+            ]   
+        
+
+        df = pd.DataFrame.from_dict(
+            {
+                (re.sub(r"_|/", convert , test[0]).strip(), 
+                 test[1],
+                 machine['run_id']
+                 ): 
+                    {
+                        "roc value": test[2]
+                    }
+                for param in list(zip(all_params, results))
+                for machine in param[1]
+                for test in machine['run_details']['fun_return']
+             
+            },
+            orient='index'
+        )
+
+        df.index = df.index.set_names(['path', 'model', 'run id'])
+
+        self.write_df(df, filename='results_03_combined')
         print("FINISH: results_03_combined")
 
 
@@ -333,6 +319,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_components', type=int)
     parser.add_argument('--level', type=int)
     parser.add_argument('--perplexity', type=int)
+    parser.add_argument('--runs', type=int)
     parser.add_argument('--output', type=str)
     parse_args = parser.parse_args()
     main(parse_args)
