@@ -12,4 +12,4 @@ Find an example [here](examples/MTSA.ipynb)
 ## The MFCC Paper 2023
 
 ```python
-python scripts/paper2023.py --path=/data/MIMII/  --n_components=230 --level=2 --output=/data/output/ --perplexity=40
+python scripts/paper2023.py --path=/data/MIMII/  --n_components=230 --level=2 --output=/data/output/ --perplexity=40 --runs=3
